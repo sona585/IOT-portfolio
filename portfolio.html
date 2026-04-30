@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IoT Patient Monitoring — VYASONA</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0d0f;
+    --surface: #111518;
+    --border: #1e2730;
+    --accent: #00e5a0;
+    --accent2: #0af;
+    --warn: #ff6b35;
+    --text: #e8edf2;
+    --muted: #5a6a7a;
+    --card: #13191f;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* GRID LINES */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,160,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,160,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ──── HEADER ──── */
+  header {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 6rem 8vw 4rem;
+    overflow: hidden;
+    z-index: 1;
+  }
+
+  .header-glow {
+    position: absolute;
+    top: -20%;
+    right: -10%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(0,229,160,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0,229,160,0.08);
+    border: 1px solid rgba(0,229,160,0.25);
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border-radius: 2px;
+    margin-bottom: 2rem;
+    width: fit-content;
+    animation: fadeSlide 0.6s ease both;
+  }
+
+  .badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  h1 {
+    font-size: clamp(2.8rem, 7vw, 6rem);
+    font-weight: 800;
+    line-height: 1.0;
+    letter-spacing: -0.03em;
+    animation: fadeSlide 0.7s 0.1s ease both;
+  }
+
+  h1 span.hl { color: var(--accent); }
+  h1 span.hl2 { color: var(--accent2); }
+
+  .subtitle {
+    margin-top: 1.5rem;
+    font-size: 1.1rem;
+    color: var(--muted);
+    max-width: 520px;
+    line-height: 1.7;
+    font-weight: 400;
+    animation: fadeSlide 0.7s 0.2s ease both;
+  }
+
+  .header-meta {
+    display: flex;
+    gap: 2rem;
+    margin-top: 3rem;
+    flex-wrap: wrap;
+    animation: fadeSlide 0.7s 0.3s ease both;
+  }
+
+  .meta-item {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+  }
+  .meta-item strong { color: var(--text); display: block; font-size: 0.9rem; margin-bottom: 2px; }
+
+  .cta-row {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2.5rem;
+    flex-wrap: wrap;
+    animation: fadeSlide 0.7s 0.4s ease both;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    border-radius: 3px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    font-weight: 700;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+    border: 1px solid var(--accent);
+  }
+  .btn-primary:hover { background: #00ffb3; transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,229,160,0.3); }
+
+  .btn-outline {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-2px); }
+
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ──── SECTION ──── */
+  section {
+    position: relative;
+    z-index: 1;
+    padding: 5rem 8vw;
+  }
+
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.8rem;
+  }
+
+  h2 {
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 3rem;
+    color: var(--text);
+  }
+
+  /* ──── OVERVIEW CARDS ──── */
+  .overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-bottom: 4rem;
+  }
+
+  .ov-card {
+    background: var(--card);
+    padding: 2rem 1.8rem;
+    transition: background 0.2s;
+  }
+  .ov-card:hover { background: #161d24; }
+
+  .ov-icon {
+    font-size: 1.6rem;
+    margin-bottom: 1rem;
+  }
+
+  .ov-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.4rem;
+  }
+
+  .ov-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.4;
+  }
+
+  /* ──── ABSTRACT ──── */
+  .abstract-box {
+    border-left: 3px solid var(--accent);
+    padding: 1.8rem 2.2rem;
+    background: var(--card);
+    font-size: 1.05rem;
+    line-height: 1.85;
+    color: #b0bec8;
+    margin-bottom: 4rem;
+  }
+
+  /* ──── TWO COLUMN ──── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-bottom: 4rem;
+  }
+
+  .col-box {
+    background: var(--card);
+    padding: 2rem;
+  }
+
+  .col-box h3 {
+    font-size: 0.8rem;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1.2rem;
+  }
+
+  .tag-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tag {
+    background: rgba(0,170,255,0.08);
+    border: 1px solid rgba(0,170,255,0.2);
+    color: var(--accent2);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    padding: 4px 10px;
+    border-radius: 2px;
+  }
+  .tag.green {
+    background: rgba(0,229,160,0.08);
+    border-color: rgba(0,229,160,0.2);
+    color: var(--accent);
+  }
+
+  ul.clean-list { list-style: none; }
+  ul.clean-list li {
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.92rem;
+    color: #b0bec8;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    line-height: 1.5;
+  }
+  ul.clean-list li::before { content: '→'; color: var(--accent); flex-shrink: 0; }
+  ul.clean-list li:last-child { border-bottom: none; }
+
+  /* ──── CIRCUIT DIAGRAM ──── */
+  .diagram-frame {
+    border: 1px solid var(--border);
+    background: var(--card);
+    overflow: hidden;
+    margin-bottom: 4rem;
+  }
+
+  .diagram-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,0,0,0.3);
+  }
+
+  .diagram-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .diagram-dots { display: flex; gap: 6px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot:nth-child(1) { background: #ff5f57; }
+  .dot:nth-child(2) { background: #febc2e; }
+  .dot:nth-child(3) { background: #28c840; }
+
+  .diagram-frame img {
+    width: 100%;
+    display: block;
+  }
+
+  /* ──── CODE BLOCK ──── */
+  .code-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    margin-bottom: 4rem;
+  }
+
+  .code-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,0,0,0.3);
+  }
+
+  .code-filename {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+
+  .code-lang {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--accent);
+    background: rgba(0,229,160,0.1);
+    border: 1px solid rgba(0,229,160,0.2);
+    padding: 2px 8px;
+    border-radius: 2px;
+  }
+
+  pre {
+    margin: 0;
+    padding: 1.8rem;
+    overflow-x: auto;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.78rem;
+    line-height: 1.8;
+    color: #c9d8e8;
+  }
+
+  .kw { color: #c792ea; }
+  .fn { color: #82aaff; }
+  .str { color: #c3e88d; }
+  .cmt { color: #546e7a; font-style: italic; }
+  .num { color: #f78c6c; }
+  .preproc { color: #00e5a0; }
+
+  /* ──── PHOTO ──── */
+  .photo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-bottom: 4rem;
+  }
+
+  .photo-grid img {
+    width: 100%;
+    display: block;
+    object-fit: cover;
+    max-height: 400px;
+    filter: saturate(0.8);
+    transition: filter 0.3s;
+  }
+  .photo-grid img:hover { filter: saturate(1.1); }
+
+  /* ──── FLOW ──── */
+  .flow-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    overflow-x: auto;
+    margin-bottom: 4rem;
+    padding-bottom: 1rem;
+  }
+
+  .flow-step {
+    flex-shrink: 0;
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 1.2rem 1.5rem;
+    min-width: 140px;
+    text-align: center;
+    transition: border-color 0.2s;
+  }
+  .flow-step:hover { border-color: var(--accent); }
+
+  .flow-step .step-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    margin-bottom: 0.4rem;
+  }
+
+  .flow-step .step-text {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.4;
+  }
+
+  .flow-arrow {
+    flex-shrink: 0;
+    font-size: 1.2rem;
+    color: var(--accent);
+    padding: 0 0.5rem;
+  }
+
+  /* ──── FUTURE / APPLICATIONS ──── */
+  .app-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-bottom: 4rem;
+  }
+
+  .app-card {
+    background: var(--card);
+    padding: 1.5rem;
+    transition: background 0.2s;
+  }
+  .app-card:hover { background: #161d24; }
+
+  .app-card .app-icon { font-size: 1.4rem; margin-bottom: 0.8rem; }
+  .app-card .app-name { font-size: 0.88rem; font-weight: 700; color: var(--text); line-height: 1.4; }
+
+  /* ──── GITHUB BANNER ──── */
+  .github-banner {
+    border: 1px solid var(--border);
+    background: var(--card);
+    padding: 3rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin-bottom: 4rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .github-banner::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(0,170,255,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .gh-left h3 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+  }
+
+  .gh-left p {
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  .gh-stats {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .gh-stat {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+  }
+  .gh-stat span { display: block; color: var(--text); font-size: 1.1rem; font-weight: 700; margin-bottom: 2px; }
+
+  /* ──── FOOTER ──── */
+  footer {
+    position: relative;
+    z-index: 1;
+    border-top: 1px solid var(--border);
+    padding: 2rem 8vw;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+  }
+
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  /* ──── DIVIDER ──── */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 0 8vw;
+  }
+
+  @media (max-width: 700px) {
+    .two-col { grid-template-columns: 1fr; }
+    .photo-grid { grid-template-columns: 1fr; }
+    .github-banner { flex-direction: column; }
+    .flow-step { min-width: 110px; padding: 0.8rem 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ──── HEADER ──── -->
+<header>
+  <div class="header-glow"></div>
+  <div class="badge">Biomedical · IoT · ESP8266</div>
+  <h1>IoT <span class="hl">Patient</span><br>Monitoring<br>& <span class="hl2">Alert</span> System</h1>
+  <p class="subtitle">Real-time patient movement detection using a PIR sensor and ESP8266 NodeMCU — transmitting instant alerts to caregivers via the Blynk IoT cloud platform.</p>
+  <div class="header-meta">
+    <div class="meta-item"><strong>VYASONA</strong>Author</div>
+    <div class="meta-item"><strong>Apr 2026</strong>Date</div>
+    <div class="meta-item"><strong>ESP8266 + HC-SR501</strong>Core Hardware</div>
+    <div class="meta-item"><strong>Blynk IoT</strong>Platform</div>
+  </div>
+  <div class="cta-row">
+    <a href="https://github.com/" target="_blank" class="btn btn-primary">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+      View on GitHub
+    </a>
+    <a href="#circuit" class="btn btn-outline">↓ Explore Project</a>
+  </div>
+</header>
+
+<hr class="divider">
+
+<!-- ──── OVERVIEW ──── -->
+<section>
+  <div class="section-label">// overview</div>
+  <h2>Project at a Glance</h2>
+  <div class="overview-grid">
+    <div class="ov-card"><div class="ov-icon">🔌</div><div class="ov-label">Microcontroller</div><div class="ov-value">ESP8266 NodeMCU</div></div>
+    <div class="ov-card"><div class="ov-icon">👁️</div><div class="ov-label">Sensor</div><div class="ov-value">PIR HC-SR501</div></div>
+    <div class="ov-card"><div class="ov-icon">☁️</div><div class="ov-label">Cloud Platform</div><div class="ov-value">Blynk IoT</div></div>
+    <div class="ov-card"><div class="ov-icon">📡</div><div class="ov-label">Communication</div><div class="ov-value">Wi-Fi 2.4 GHz</div></div>
+    <div class="ov-card"><div class="ov-icon">⚡</div><div class="ov-label">Power</div><div class="ov-value">USB 5V → 3.3V</div></div>
+    <div class="ov-card"><div class="ov-icon">🔒</div><div class="ov-label">Signal Stability</div><div class="ov-value">2.2 kΩ Pull-down</div></div>
+  </div>
+
+  <div class="abstract-box">
+    This project presents an IoT-based patient monitoring and alert system using an ESP8266 NodeMCU and a PIR motion sensor. The system detects patient movement in real time and sends instant alerts to caregivers through the Blynk IoT platform. Although PIR sensors are commonly used in security systems, this project adapts them for biomedical applications such as elderly care, patient activity tracking, and fall detection. The system is low-cost, easy to implement, and suitable for home as well as hospital environments.
+  </div>
+</section>
+
+<!-- ──── WORKING FLOW ──── -->
+<section>
+  <div class="section-label">// working principle</div>
+  <h2>How It Works</h2>
+  <div class="flow-row">
+    <div class="flow-step"><div class="step-num">STEP 01</div><div class="step-text">PIR Detects Motion</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><div class="step-num">STEP 02</div><div class="step-text">OUT → HIGH (3.3V)</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><div class="step-num">STEP 03</div><div class="step-text">D5 reads signal</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><div class="step-num">STEP 04</div><div class="step-text">ESP8266 processes</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><div class="step-num">STEP 05</div><div class="step-text">Sends via Wi-Fi</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><div class="step-num">STEP 06</div><div class="step-text">Blynk Alert Fired</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><div class="step-num">STEP 07</div><div class="step-text">Caregiver Notified</div></div>
+  </div>
+</section>
+
+<!-- ──── CIRCUIT DIAGRAM ──── -->
+<section id="circuit">
+  <div class="section-label">// hardware</div>
+  <h2>Circuit Diagram</h2>
+  <div class="diagram-frame">
+    <div class="diagram-header">
+      <div class="diagram-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      <div class="diagram-title">connection_diagram.png — ESP8266 + PIR HC-SR501</div>
+      <div style="font-family:'Space Mono',monospace;font-size:0.65rem;color:var(--muted);">REV 1.0</div>
+    </div>
+    <!-- Embedded SVG circuit diagram since images won't load in standalone HTML -->
+    <svg viewBox="0 0 900 500" xmlns="http://www.w3.org/2000/svg" style="width:100%;background:#0d1218;display:block;">
+      <!-- Background grid -->
+      <defs>
+        <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+          <path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(0,229,160,0.04)" stroke-width="1"/>
+        </pattern>
+      </defs>
+      <rect width="900" height="500" fill="url(#grid)"/>
+
+      <!-- PIR Sensor Box -->
+      <rect x="40" y="160" width="140" height="180" rx="6" fill="#111a14" stroke="#00e5a0" stroke-width="1.5"/>
+      <text x="110" y="185" text-anchor="middle" font-family="Space Mono" font-size="9" fill="#00e5a0" letter-spacing="1">PIR SENSOR</text>
+      <text x="110" y="198" text-anchor="middle" font-family="Space Mono" font-size="8" fill="#546e7a">HC-SR501</text>
+      <!-- Dome -->
+      <circle cx="110" cy="270" r="50" fill="none" stroke="#2a3a2a" stroke-width="2"/>
+      <circle cx="110" cy="270" r="38" fill="#1a2a1a" stroke="#00e5a0" stroke-width="1" stroke-dasharray="4,3"/>
+      <circle cx="110" cy="270" r="18" fill="#2a4a2a"/>
+      <!-- Pins -->
+      <rect x="70" y="325" width="20" height="8" rx="2" fill="#333"/>
+      <text x="80" y="348" text-anchor="middle" font-family="Space Mono" font-size="7" fill="#ff6b35">VCC</text>
+      <rect x="100" y="325" width="20" height="8" rx="2" fill="#333"/>
+      <text x="110" y="348" text-anchor="middle" font-family="Space Mono" font-size="7" fill="#ff6b00">OUT</text>
+      <rect x="130" y="325" width="20" height="8" rx="2" fill="#333"/>
+      <text x="140" y="348" text-anchor="middle" font-family="Space Mono" font-size="7" fill="#888">GND</text>
+
+      <!-- NodeMCU -->
+      <rect x="320" y="80" width="180" height="340" rx="6" fill="#0d1810" stroke="#00e5a0" stroke-width="1.5"/>
+      <text x="410" y="108" text-anchor="middle" font-family="Space Mono" font-size="9" fill="#00e5a0" letter-spacing="1">NODEMCU</text>
+      <text x="410" y="122" text-anchor="middle" font-family="Space Mono" font-size="8" fill="#546e7a">ESP8266</text>
+      <!-- Antenna -->
+      <rect x="370" y="135" width="80" height="35" rx="3" fill="#1a2a1a" stroke="#546e7a" stroke-width="1"/>
+      <path d="M 380 145 Q 390 140 400 148 Q 410 156 420 148 Q 430 140 440 148" fill="none" stroke="#00e5a0" stroke-width="1.5"/>
+      <!-- Module chip -->
+      <rect x="355" y="185" width="110" height="70" rx="3" fill="#1a2a1a" stroke="#2a3a2a" stroke-width="1"/>
+      <text x="410" y="225" text-anchor="middle" font-family="Space Mono" font-size="8" fill="#546e7a">ESP-12E</text>
+      <!-- Pins left -->
+      <g font-family="Space Mono" font-size="7" fill="#5a6a7a">
+        <text x="328" y="285">D5</text><rect x="320" y="278" width="8" height="8" rx="1" fill="#1e3a2a" stroke="#00e5a0" stroke-width="1"/>
+        <text x="328" y="302">D6</text><rect x="320" y="295" width="8" height="8" rx="1" fill="#1e2a3a" stroke="#0af" stroke-width="0.5"/>
+        <text x="328" y="319">3V</text><rect x="320" y="312" width="8" height="8" rx="1" fill="#3a1e1e" stroke="#ff6b35" stroke-width="0.5"/>
+        <text x="328" y="336">G</text><rect x="320" y="329" width="8" height="8" rx="1" fill="#222" stroke="#666" stroke-width="0.5"/>
+      </g>
+
+      <!-- Breadboard -->
+      <rect x="580" y="170" width="120" height="220" rx="4" fill="#111820" stroke="#1e2730" stroke-width="1"/>
+      <text x="640" y="192" text-anchor="middle" font-family="Space Mono" font-size="8" fill="#546e7a">BREADBOARD</text>
+      <!-- Breadboard holes -->
+      <g fill="#1e2730">
+        <rect x="595" y="205" width="6" height="6" rx="1"/>
+        <rect x="610" y="205" width="6" height="6" rx="1"/>
+        <rect x="625" y="205" width="6" height="6" rx="1"/>
+        <rect x="640" y="205" width="6" height="6" rx="1"/>
+        <rect x="655" y="205" width="6" height="6" rx="1"/>
+        <rect x="670" y="205" width="6" height="6" rx="1"/>
+        <rect x="685" y="205" width="6" height="6" rx="1"/>
+        <rect x="595" y="225" width="6" height="6" rx="1"/>
+        <rect x="610" y="225" width="6" height="6" rx="1"/>
+        <rect x="625" y="225" width="6" height="6" rx="1"/>
+        <rect x="640" y="225" width="6" height="6" rx="1"/>
+        <rect x="655" y="225" width="6" height="6" rx="1"/>
+        <rect x="670" y="225" width="6" height="6" rx="1"/>
+        <rect x="685" y="225" width="6" height="6" rx="1"/>
+      </g>
+      <!-- Resistor -->
+      <rect x="620" y="300" width="40" height="15" rx="7" fill="#c4a265" stroke="#a08050" stroke-width="1"/>
+      <rect x="625" y="304" width="4" height="7" rx="1" fill="#cc4444"/>
+      <rect x="633" y="304" width="4" height="7" rx="1" fill="#cc4444"/>
+      <rect x="641" y="304" width="4" height="7" rx="1" fill="#cc8800"/>
+      <rect x="650" y="304" width="4" height="7" rx="1" fill="#ffcc00"/>
+      <line x1="640" y1="300" x2="640" y2="285" stroke="#888" stroke-width="1.5"/>
+      <line x1="640" y1="315" x2="640" y2="355" stroke="#888" stroke-width="1.5"/>
+      <text x="640" y="375" text-anchor="middle" font-family="Space Mono" font-size="8" fill="#546e7a">2.2kΩ</text>
+      <!-- GND symbol -->
+      <line x1="640" y1="380" x2="640" y2="395" stroke="#666" stroke-width="2"/>
+      <line x1="625" y1="395" x2="655" y2="395" stroke="#666" stroke-width="2"/>
+      <line x1="630" y1="400" x2="650" y2="400" stroke="#666" stroke-width="1.5"/>
+      <line x1="635" y1="405" x2="645" y2="405" stroke="#666" stroke-width="1"/>
+
+      <!-- VCC wire (red) -->
+      <path d="M 80 325 L 80 420 L 300 420 L 300 320 L 320 320" fill="none" stroke="#ff4444" stroke-width="2" stroke-dasharray="none"/>
+      <text x="180" y="415" font-family="Space Mono" font-size="7" fill="#ff4444">VCC → 3.3V</text>
+
+      <!-- GND wire (gray/brown) -->
+      <path d="M 140 325 L 140 440 L 290 440 L 290 333 L 320 333" fill="none" stroke="#888" stroke-width="2"/>
+      <text x="200" y="455" font-family="Space Mono" font-size="7" fill="#888">GND → G</text>
+
+      <!-- OUT wire (orange) -->
+      <path d="M 110 325 L 110 460 L 270 460 L 270 282 L 320 282" fill="none" stroke="#ff8c00" stroke-width="2"/>
+      <text x="165" y="472" font-family="Space Mono" font-size="7" fill="#ff8c00">OUT → D5</text>
+
+      <!-- D5 to breadboard (orange) -->
+      <path d="M 500 282 L 580 282 L 580 240 L 620 240" fill="none" stroke="#ff8c00" stroke-width="1.5"/>
+
+      <!-- D6 to breadboard (purple) -->
+      <path d="M 500 299 L 560 299 L 560 260 L 620 260" fill="none" stroke="#8844aa" stroke-width="1.5"/>
+
+      <!-- USB -->
+      <rect x="360" y="390" width="100" height="30" rx="4" fill="#1a2030" stroke="#1e2730" stroke-width="1"/>
+      <rect x="395" y="385" width="30" height="8" rx="2" fill="#2a3040" stroke="#444" stroke-width="1"/>
+      <text x="410" y="410" text-anchor="middle" font-family="Space Mono" font-size="7" fill="#546e7a">USB POWER</text>
+
+      <!-- Blynk cloud icon -->
+      <ellipse cx="800" cy="200" rx="70" ry="45" fill="#0d1820" stroke="#0af" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="800" y="197" text-anchor="middle" font-family="Space Mono" font-size="9" fill="#0af">BLYNK</text>
+      <text x="800" y="212" text-anchor="middle" font-family="Space Mono" font-size="7" fill="#546e7a">IoT CLOUD</text>
+      <!-- WiFi waves -->
+      <path d="M 760 265 Q 800 245 840 265" fill="none" stroke="#0af" stroke-width="1.5" opacity="0.6"/>
+      <path d="M 770 275 Q 800 260 830 275" fill="none" stroke="#0af" stroke-width="1.5" opacity="0.8"/>
+      <path d="M 782 285 Q 800 278 818 285" fill="none" stroke="#0af" stroke-width="1.5"/>
+      <!-- NodeMCU to cloud arrow -->
+      <path d="M 700 200 L 720 200" fill="none" stroke="#0af" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <polygon points="720,196 730,200 720,204" fill="#0af"/>
+
+      <!-- Labels -->
+      <text x="450" y="55" text-anchor="middle" font-family="Syne,sans-serif" font-size="14" fill="#00e5a0" font-weight="700">IoT Patient Monitoring Circuit</text>
+      <text x="450" y="72" text-anchor="middle" font-family="Space Mono" font-size="8" fill="#546e7a">ESP8266 NodeMCU + PIR HC-SR501 + Blynk</text>
+    </svg>
+  </div>
+
+  <div class="two-col">
+    <div class="col-box">
+      <h3>Hardware Components</h3>
+      <ul class="clean-list">
+        <li>ESP8266 NodeMCU (Wi-Fi microcontroller)</li>
+        <li>PIR Motion Sensor HC-SR501</li>
+        <li>2.2 kΩ resistors × 2 (pull-down)</li>
+        <li>Breadboard + Jumper wires</li>
+        <li>USB cable (power + programming)</li>
+      </ul>
+    </div>
+    <div class="col-box">
+      <h3>Software Stack</h3>
+      <div class="tag-list">
+        <span class="tag green">Arduino IDE</span>
+        <span class="tag green">Blynk IoT</span>
+        <span class="tag">ESP8266WiFi.h</span>
+        <span class="tag">BlynkSimpleEsp8266.h</span>
+        <span class="tag">Wi-Fi 2.4 GHz</span>
+        <span class="tag green">C++ (Arduino)</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ──── CODE ──── -->
+<section>
+  <div class="section-label">// source code</div>
+  <h2>Arduino Firmware</h2>
+  <div class="code-section">
+    <div class="code-header">
+      <span class="code-filename">Motion_project_final.ino</span>
+      <span class="code-lang">C++ / Arduino</span>
+    </div>
+    <pre><span class="preproc">#define</span> BLYNK_TEMPLATE_ID   <span class="str">"TMPL3qzSUwdO2"</span>
+<span class="preproc">#define</span> BLYNK_TEMPLATE_NAME <span class="str">"Motion detection"</span>
+<span class="preproc">#define</span> BLYNK_AUTH_TOKEN    <span class="str">"x-Zslc4wStJedwIE5CJvXKMVx_SdfDPy"</span>
+<span class="preproc">#define</span> BLYNK_PRINT Serial
+
+<span class="preproc">#include</span> <span class="str">&lt;ESP8266WiFi.h&gt;</span>
+<span class="preproc">#include</span> <span class="str">&lt;BlynkSimpleEsp8266.h&gt;</span>
+
+<span class="kw">char</span> ssid[] = <span class="str">"ABC"</span>;        <span class="cmt">// Your 2.4GHz Wi-Fi name</span>
+<span class="kw">char</span> pass[] = <span class="str">"12345678"</span>;   <span class="cmt">// Wi-Fi password</span>
+
+<span class="kw">int</span> pirPin     = D5;   <span class="cmt">// PIR motion sensor output pin</span>
+<span class="kw">int</span> ledPin     = D1;   <span class="cmt">// LED pin</span>
+<span class="kw">int</span> motionState = <span class="num">0</span>;   <span class="cmt">// Store current motion state</span>
+
+BlynkTimer timer;
+
+<span class="cmt">// ⚡ Blink LED on motion</span>
+<span class="kw">void</span> <span class="fn">blinkLED</span>() {
+  <span class="fn">digitalWrite</span>(ledPin, HIGH);
+  <span class="fn">delay</span>(<span class="num">200</span>);
+  <span class="fn">digitalWrite</span>(ledPin, LOW);
+  <span class="fn">delay</span>(<span class="num">200</span>);
+}
+
+<span class="cmt">// ⚡ Check motion sensor state</span>
+<span class="kw">void</span> <span class="fn">checkMotion</span>() {
+  <span class="kw">int</span> currentState = <span class="fn">digitalRead</span>(pirPin);
+
+  <span class="kw">if</span> (currentState != motionState) {
+    motionState = currentState;
+
+    <span class="kw">if</span> (motionState == HIGH) {
+      Serial.<span class="fn">println</span>(<span class="str">"⚠ Motion Detected!"</span>);
+      Blynk.<span class="fn">virtualWrite</span>(V0, <span class="num">1</span>);
+      Blynk.<span class="fn">logEvent</span>(<span class="str">"motion_detected"</span>, <span class="str">"⚠ Motion detected near sensor!"</span>);
+
+      <span class="cmt">// Blink LED 3 times</span>
+      <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; <span class="num">3</span>; i++) { <span class="fn">blinkLED</span>(); }
+    } <span class="kw">else</span> {
+      Blynk.<span class="fn">virtualWrite</span>(V0, <span class="num">0</span>);
+      <span class="fn">digitalWrite</span>(ledPin, LOW);
+    }
+  }
+}
+
+<span class="cmt">// ⚙ Auto-reconnect function</span>
+<span class="kw">void</span> <span class="fn">ensureConnection</span>() {
+  <span class="kw">if</span> (WiFi.<span class="fn">status</span>() != WL_CONNECTED) {
+    Serial.<span class="fn">println</span>(<span class="str">"WiFi disconnected... reconnecting"</span>);
+    WiFi.<span class="fn">begin</span>(ssid, pass);
+  }
+  <span class="kw">if</span> (!Blynk.<span class="fn">connected</span>()) {
+    Blynk.<span class="fn">connect</span>();
+  }
+}
+
+<span class="kw">void</span> <span class="fn">setup</span>() {
+  Serial.<span class="fn">begin</span>(<span class="num">115200</span>);
+  <span class="fn">pinMode</span>(pirPin, INPUT);
+  <span class="fn">pinMode</span>(ledPin, OUTPUT);
+  Blynk.<span class="fn">begin</span>(BLYNK_AUTH_TOKEN, ssid, pass);
+  timer.<span class="fn">setInterval</span>(<span class="num">500L</span>, checkMotion);
+  timer.<span class="fn">setInterval</span>(<span class="num">10000L</span>, ensureConnection);
+}
+
+<span class="kw">void</span> <span class="fn">loop</span>() {
+  Blynk.<span class="fn">run</span>();
+  timer.<span class="fn">run</span>();
+}</pre>
+  </div>
+</section>
+
+<!-- ──── RESULTS ──── -->
+<section>
+  <div class="section-label">// results</div>
+  <h2>System Results</h2>
+  <div class="two-col">
+    <div class="col-box">
+      <h3>What Was Achieved</h3>
+      <ul class="clean-list">
+        <li>Human motion detected in real time</li>
+        <li>Motion events displayed on Blynk dashboard</li>
+        <li>Instant push notifications on movement detection</li>
+        <li>Continuous operation with stable Wi-Fi</li>
+        <li>False triggering minimized via pull-down resistors</li>
+        <li>Successful flash upload — 290,160 bytes at 123.7 kbit/s</li>
+      </ul>
+    </div>
+    <div class="col-box">
+      <h3>Objectives Met</h3>
+      <ul class="clean-list">
+        <li>Low-cost IoT monitoring design</li>
+        <li>Real-time PIR motion detection</li>
+        <li>Wi-Fi data transmission via ESP8266</li>
+        <li>Blynk alert delivery to caregivers</li>
+        <li>Continuous remote monitoring enabled</li>
+        <li>Reduced need for manual supervision</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ──── BIOMEDICAL APPLICATIONS ──── -->
+<section>
+  <div class="section-label">// applications</div>
+  <h2>Biomedical Use Cases</h2>
+  <div class="app-grid">
+    <div class="app-card"><div class="app-icon">👴</div><div class="app-name">Elderly Patient Home Monitoring</div></div>
+    <div class="app-card"><div class="app-icon">🚨</div><div class="app-name">Fall Detection & Emergency Alerts</div></div>
+    <div class="app-card"><div class="app-icon">🏥</div><div class="app-name">ICU Movement Tracking</div></div>
+    <div class="app-card"><div class="app-icon">🩺</div><div class="app-name">Post-Surgery Activity Monitoring</div></div>
+    <div class="app-card"><div class="app-icon">♿</div><div class="app-name">Assisted Living Systems</div></div>
+    <div class="app-card"><div class="app-icon">📱</div><div class="app-name">Remote IoT Healthcare</div></div>
+  </div>
+</section>
+
+<!-- ──── FUTURE SCOPE ──── -->
+<section>
+  <div class="section-label">// future scope</div>
+  <h2>Roadmap & Enhancements</h2>
+  <div class="two-col" style="margin-bottom:0">
+    <div class="col-box">
+      <h3>Planned Upgrades</h3>
+      <ul class="clean-list">
+        <li>Heart rate + SpO2 sensor integration for full vitals</li>
+        <li>AI-based prediction for fall detection</li>
+        <li>Dedicated mobile app for advanced tracking</li>
+      </ul>
+    </div>
+    <div class="col-box">
+      <h3>Ecosystem Integration</h3>
+      <ul class="clean-list">
+        <li>Cloud database for long-term patient history</li>
+        <li>Hospital IoT system integration</li>
+        <li>Smart healthcare automation pipelines</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ──── GITHUB ──── -->
+<section>
+  <div class="section-label">// repository</div>
+  <h2>Open Source</h2>
+  <div class="github-banner">
+    <div class="gh-left">
+      <h3>View on <span style="color:var(--accent2)">GitHub</span></h3>
+      <p>Full source code, circuit diagrams, and documentation</p>
+    </div>
+    <div class="gh-stats">
+      <div class="gh-stat"><span>Arduino C++</span>Language</div>
+      <div class="gh-stat"><span>MIT</span>License</div>
+      <div class="gh-stat"><span>IoT · Biomedical</span>Topics</div>
+    </div>
+    <a href="https://github.com/" target="_blank" class="btn btn-primary" style="flex-shrink:0">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+      github.com/VYASONA
+    </a>
+  </div>
+</section>
+
+<footer>
+  <span>© 2026 VYASONA — IoT Patient Monitoring System</span>
+  <span>Built with ESP8266 · Blynk IoT · Arduino IDE</span>
+  <a href="https://github.com/" target="_blank">GitHub →</a>
+</footer>
+
+</body>
+</html>
